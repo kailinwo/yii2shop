@@ -19,6 +19,7 @@ class Admin extends \yii\db\ActiveRecord implements IdentityInterface
 {
     public $old_password_hash;
     public $re_password_hash;
+    public $role;
     /**
      * @inheritdoc
      */
@@ -36,7 +37,8 @@ class Admin extends \yii\db\ActiveRecord implements IdentityInterface
             [['username', 'password_hash', 'email','status'], 'required'],
             [['email'],'email'],
             ['re_password_hash', 'compare', 'compareAttribute' =>'password_hash'],
-            [['re_password_hash','old_password_hash'],'safe'],
+            [['re_password_hash','old_password_hash','role'],'safe'],
+
         ];
     }
     //验证旧密码
@@ -45,7 +47,7 @@ class Admin extends \yii\db\ActiveRecord implements IdentityInterface
 //        var_dump($admin);die;
         $dbpassword = $admin->password_hash;
         if($admin){
-            if(\Yii::$app->security->validatePassword($this->password_hash,$dbpassword)){
+            if(\Yii::$app->security->validatePassword($this->old_password_hash,$dbpassword)){
                 return true;
             }else{
                 return false;
@@ -66,6 +68,7 @@ class Admin extends \yii\db\ActiveRecord implements IdentityInterface
             're_password_hash'=>'确认密码',
             'email' => '邮箱',
             'status' => '状态',
+            'role'=>'角色',
             'last_login_time' => '最后登录时间',
             'last_login_ip' => '最后登录ip',
         ];

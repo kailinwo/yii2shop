@@ -36,7 +36,7 @@ class RbacController extends Controller
         return $this->render('permission-index',['model'=>$model]);
     }
     //权限删除
-    public function actionDelete($name){
+    public function actionPermissionDelete($name){
         $authManager = \Yii::$app->authManager;//创建新的权限对象
         $permission=$authManager->getPermission($name);//找到那个对象!
         \Yii::$app->authManager->remove($permission);
@@ -77,6 +77,7 @@ class RbacController extends Controller
                     foreach ($model->permission as $per){
                         $permission = $authManager->getPermission($per);
                         $authManager->addChild($role,$permission);//有几个就添加几个权限addChild
+                        echo 1;
                     }
                 }
                 //+++++权限的添加处理+++++
@@ -103,12 +104,50 @@ class RbacController extends Controller
     public function actionRoleUpdate($name){
         $authManger = \Yii::$app->authManager;
         $role = $authManger->getRole($name);
+        //var_dump($role);die;
         $model = new RoleForm();
         $model->name = $role->name;
         $model->description = $role->description;
         //+++++处理权限的回显+++++
         $model->permission = [];
-        
-        //+++++处理权限的回显+++++
+        //根据当前的角色来获取当前角色所拥有的权限
+        //var_dump($model);die;
+        $permissions = $authManger->getPermissionsByRole($name);
+        foreach($permissions as $permission){
+            $model->permission[] = $permission->name;
+        }
+//        var_dump($model);die;
+        //++++得到所有的权限+++++
+        $permissions = $authManger->getPermissions();
+        $permission=[];  //准备空数组来存放保存的key=>value形式的数据
+        foreach($permissions as $per){ //遍历为:key=>value
+            $permission[$per->name] = $per->description;
+        }
+        //======修改后提交=========
+        if(\Yii::$app->request->isPost){
+             $model->load(\Yii::$app->request->post());
+             if($model->validate()){
+                 $role->name = $model->name;
+                 $role->description = $model->description;
+                 $authManger->update($name,$role);
+                 //1.1再保存修改的权限前,先去除所有的权限
+                 $authManger->removeChildren($role);
+                 //1.2重新关联该角色的新的权限
+                 foreach($model->permission as $per){
+                     $permission=$authManger->getPermission($per);
+                     $authManger->addChild($role,$permission);
+                 }
+                 //保存成功提交
+                 \Yii::$app->session->setFlash('success','修改角色成功!');
+                 return $this->redirect(['rbac/role-index']);
+             }
+        }
+        return $this->render('role-add',['model'=>$model,'permission'=>$permission]);
+    }
+    //角色删除
+    public function actionRoleDelete($name){
+        $auth = \Yii::$app->authManager;
+        $role = $auth->getRole($name);
+        $auth->remove($role);
     }
 }

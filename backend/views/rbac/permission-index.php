@@ -7,7 +7,7 @@ $this->registerCssFile('@web/DataTables/media/css/jquery.dataTables.css');
 $this->registerJsFile('@web/DataTables/media/js/jquery.dataTables.js',[
     'depends'=>\yii\web\JqueryAsset::className()
 ]);
-$url = \yii\helpers\Url::to(['rbac/delete']);
+$url = \yii\helpers\Url::to(['rbac/permission-delete']);
 $js=<<<JS
    $(document).ready(function() {
            $('#example').DataTable();

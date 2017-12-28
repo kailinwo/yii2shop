@@ -26,8 +26,8 @@ $('#table').on('click','#delete',function(){
     var tr = $(this).closest('tr');
     if(confirm('您确定删除吗?该操作不可恢复!')){
         $.get("$url",{name:tr.attr('name')},function(){
-            alert(111);
-        // tr.fadeOut(); 
+            // alert(111);
+            tr.fadeOut(); 
         });
     }
 })
