@@ -27,7 +27,6 @@ class Admin extends \yii\db\ActiveRecord implements IdentityInterface
     {
         return 'admin';
     }
-
     /**
      * @inheritdoc
      */
@@ -38,7 +37,6 @@ class Admin extends \yii\db\ActiveRecord implements IdentityInterface
             [['email'],'email'],
             ['re_password_hash', 'compare', 'compareAttribute' =>'password_hash'],
             [['re_password_hash','old_password_hash','role'],'safe'],
-
         ];
     }
     //验证旧密码
@@ -152,6 +150,26 @@ class Admin extends \yii\db\ActiveRecord implements IdentityInterface
             return true;
         }
         return false;
+    }
+
+    //得到用户的菜单
+    public function getMenus(){
+        $menuItems = [];
+        $menus = Menu::find()->where(['parent_id'=>0])->all();
+        foreach ($menus as $menu){
+            $children = Menu::find()->where(['parent_id'=>$menu->id])->all();
+            $items = [];
+            foreach($children as $child){
+                //判断用户是否拥有某权限,根据权限来完成该用户的菜单显示
+                if(Yii::$app->user->can($child->url)){
+                    $items[] = ['label'=>$child->name,'url'=>[$child->url]];
+                }
+            }
+            if($items){
+                $menuItems[] = ['label'=>$menu->name,'items'=>$items];
+            }
+        }
+        return $menuItems;
     }
 
 }

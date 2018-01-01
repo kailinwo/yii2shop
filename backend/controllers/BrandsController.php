@@ -1,6 +1,7 @@
 <?php
 
 namespace backend\controllers;
+use backend\filters\RbacFilter;
 use backend\models\Brands;
 use yii\web\UploadedFile;
 // 引入鉴权类
@@ -180,5 +181,15 @@ class BrandsController extends \yii\web\Controller
         //这是一个假的删除>>更改该条数据的状态值
         Brands::updateAll(['status'=>-1],['id'=>$id]);
 
+    }
+    //权限控制
+    public function behaviors()
+    {
+        return [
+            'rbac'=>[
+                'class'=>RbacFilter::className(),
+                'except'=>['uploader'],
+            ]
+        ];
     }
 }

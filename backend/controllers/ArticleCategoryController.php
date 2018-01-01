@@ -6,6 +6,7 @@
  * Time: 18:55
  */
 namespace backend\controllers;
+use backend\filters\RbacFilter;
 use backend\models\ArticleCategory;
 use yii\web\Controller;
 
@@ -60,5 +61,14 @@ class ArticleCategoryController extends Controller{
     public function actionDelete($id)
     {
         ArticleCategory::updateAll(['status'=>-1],['id'=>$id]);
+    }
+    //根据用户的权限来控制用户能调用的方法;
+    public function behaviors()
+    {
+        return [
+            'rbac'=>[
+                'class'=>RbacFilter::className(),
+            ],
+        ];
     }
 }

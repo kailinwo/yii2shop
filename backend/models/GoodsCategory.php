@@ -26,17 +26,23 @@ class GoodsCategory extends \yii\db\ActiveRecord
     {
         return 'goods_category';
     }
-
+    const GOODS_CATEGORY_UPDATE ='goods_category_update';
     /**
      * @inheritdoc
      */
     public function rules()
     {
         return [
-            [['tree', 'lft', 'rgt', 'depth'], 'integer'],
+//            [['name','parent_id'],'required'],
+//            [['tree', 'lft', 'rgt', 'depth','parent_id'], 'integer'],
+//            [['intro'], 'string'],
+//            [['name'], 'string', 'max' => 50],
+//            ['parent_id','validatePid'],
+            [['name','parent_id'],'required'],
+            [['tree', 'lft', 'rgt', 'depth', 'parent_id'], 'integer'],
             [['intro'], 'string'],
             [['name'], 'string', 'max' => 50],
-            ['parent_id','validatePid'],
+            ['parent_id','validatePid','on'=>self::GOODS_CATEGORY_UPDATE],
         ];
     }
     public function validatePid(){
@@ -52,7 +58,7 @@ class GoodsCategory extends \yii\db\ActiveRecord
     //查询数据显示到那个页面上!
     public static function getNodes(){
         $nodes = GoodsCategory::find()->select(['id','parent_id','name'])->asArray()->all();
-        array_unshift($nodes,['id'=>0,'parent_id'=>0,'name'=>'顶级分类']);//解决想传高级分类的尴尬境地,给数据源添加一个id为0,parent_id为0;
+        array_unshift($nodes,['id'=>'0','parent_id'=>'0','name'=>'顶级分类']);//解决想传高级分类的尴尬境地,给数据源添加一个id为0,parent_id为0;
         return Json::encode($nodes);
     }
     /**

@@ -6,6 +6,7 @@
  * Time: 22:55
  */
 namespace backend\controllers;
+use backend\filters\RbacFilter;
 use backend\models\Article;
 use backend\models\ArticleCategory;
 use backend\models\ArticleDetail;
@@ -79,7 +80,7 @@ class ArticleController extends Controller{
     //文章的删除
     public function actionDelete($id)
     {
-        //删除,该状态
+        //删除,改状态
         Article::updateAll(['status'=>-1],['id'=>$id]);
     }
     //富文本编辑器'common\widgets\ueditor\UeditorAction'
@@ -93,6 +94,15 @@ class ArticleController extends Controller{
                     'imageUrlPrefix' => "", /* 图片访问路径前缀 */
                     'imagePathFormat' => "/image/{yyyy}{mm}{dd}/{time}{rand:6}", /* 上传保存路径,可以自定义保存路径和文件名格式 */
                 ]
+            ]
+        ];
+    }
+    //权限控制
+    public function behaviors()
+    {
+        return [
+            'rbac'=>[
+                'class'=>RbacFilter::className(),
             ]
         ];
     }

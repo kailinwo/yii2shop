@@ -2,6 +2,7 @@
 
 namespace backend\controllers;
 
+use backend\filters\RbacFilter;
 use backend\models\Brands;
 use backend\models\Goods;
 use backend\models\GoodsCategory;
@@ -11,7 +12,6 @@ use backend\models\GoodsIntro;
 use common\widgets\ueditor\UeditorAction;
 use yii\data\Pagination;
 use yii\helpers\ArrayHelper;
-use yii\helpers\Json;
 use yii\web\Request;
 use yii\web\UploadedFile;
 // 引入鉴权类
@@ -38,7 +38,7 @@ class GoodsController extends \yii\web\Controller
         }
         $pager = new Pagination([
             'totalCount'=>$query->andWhere(['status'=>1])->count(),
-            'defaultPageSize'=>2,
+            'defaultPageSize'=>5,
         ]);
         $model= $query->limit($pager->limit)->offset($pager->offset)->andWhere(['status'=>1])->all();
         return $this->render('index',['model'=>$model,'pager'=>$pager]);
@@ -260,5 +260,15 @@ class GoodsController extends \yii\web\Controller
     //商品图片的删除
     public function actionPhotodelete($id){
             GoodsGallery::deleteAll(['id'=>$id]);
+    }
+    //权限控制
+    public function behaviors()
+    {
+        return [
+            'rbac'=>[
+                'class'=>RbacFilter::className(),
+                'except'=>['ueditor','uploader'],
+            ],
+        ];
     }
 }

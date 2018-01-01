@@ -2,6 +2,7 @@
 
 namespace backend\controllers;
 
+use backend\filters\RbacFilter;
 use backend\models\GoodsCategory;
 use yii\data\Pagination;
 use yii\helpers\Json;
@@ -46,10 +47,10 @@ class GoodsCategoryController extends \yii\web\Controller
         return $this->renderPartial('show');
 
     }
-
     //分类信息的修改
     public function actionUpdate($id){
         $model = GoodsCategory::findOne(['id'=>$id]);
+        $model->scenario=GoodsCategory::GOODS_CATEGORY_UPDATE;
         if($model->load(\Yii::$app->request->post())&&$model->validate()){
             if($model->parent_id){
                 //父类id不为零就是子分类
@@ -85,6 +86,14 @@ class GoodsCategoryController extends \yii\web\Controller
             GoodsCategory::deleteAll(['id'=>$id]);
         }
     }
-
+    //权限控制
+    public function behaviors()
+    {
+        return [
+            'rbac'=>[
+                'class'=>RbacFilter::className(),
+            ],
+        ];
+    }
 
 }

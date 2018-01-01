@@ -6,9 +6,9 @@
  * Time: 21:20
  */
 namespace backend\controllers;
+use backend\filters\RbacFilter;
 use backend\models\PermissionForm;
 use backend\models\RoleForm;
-use yii\rbac\Permission;
 use yii\rbac\Role;
 use yii\web\Controller;
 
@@ -111,12 +111,10 @@ class RbacController extends Controller
         //+++++处理权限的回显+++++
         $model->permission = [];
         //根据当前的角色来获取当前角色所拥有的权限
-        //var_dump($model);die;
         $permissions = $authManger->getPermissionsByRole($name);
         foreach($permissions as $permission){
             $model->permission[] = $permission->name;
         }
-//        var_dump($model);die;
         //++++得到所有的权限+++++
         $permissions = $authManger->getPermissions();
         $permission=[];  //准备空数组来存放保存的key=>value形式的数据
@@ -149,5 +147,14 @@ class RbacController extends Controller
         $auth = \Yii::$app->authManager;
         $role = $auth->getRole($name);
         $auth->remove($role);
+    }
+    //根据用户的权限来控制用户能调用的方法;
+    public function behaviors()
+    {
+        return [
+            'rbac'=>[
+                'class'=>RbacFilter::className(),
+            ],
+        ];
     }
 }

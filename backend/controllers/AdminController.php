@@ -2,15 +2,11 @@
 
 namespace backend\controllers;
 
+use backend\filters\RbacFilter;
 use backend\models\Admin;
-use backend\models\AdminEdit;
-use backend\models\AdminUpdate;
 use backend\models\LoginForm;
-use Qiniu\Auth;
-use yii\captcha\Captcha;
 use yii\captcha\CaptchaAction;
 use yii\db\Exception;
-use yii\rbac\Role;
 use yii\web\Request;
 
 class AdminController extends \yii\web\Controller
@@ -72,26 +68,50 @@ class AdminController extends \yii\web\Controller
         $request = \Yii::$app->request;
         //根据id查询数据表
         $model =Admin::findOne(['id'=>$id]);
-        //旧密码
-//        $dbpassword = $model->password_hash;
+        //得到根据用户的id去找到该用户关联的role
+        $authManager = \Yii::$app->authManager;
+        $uroles = $authManager->getRolesByUser($id);
+        $model->role = [];
+        foreach($uroles as $roles){
+            $model->role[] = $roles->name;
+        }
         if($request->isPost) {
             //加载表单数据
             $model->load($request->post());
-            if ($model->verifypwd()) {
-                //验证旧密码成功之后>>新密码加密再保存
-                $model->update_at = time();
-                $model->password_hash = \Yii::$app->security->generatePasswordHash($model->password_hash);
-                $model->save(false);
-                //跳转和提示信息
-                \Yii::$app->session->setFlash('success','修改管理员信息成功!');
-                return $this->redirect(['admin/index']);
-            } else {
-                $model->addError('oldpassword', '旧密码不正确!');
+            if ($model->validate()) {
+                //开启事务
+                $trans = \Yii::$app->db->beginTransaction();
+                try{
+                    $model->update_at = time();
+                    if(!$model->save()){
+                        throw new Exception(current($model->getFirstErrors()));
+                    };
+                    //1.1再保存修改的用户的角色信息前,先去除所有的角色
+                    $authManager->revokeAll($id);
+                    //1.2再得到所有的获取的角色,一条一条的遍历添加
+                    if($model->role){
+                        foreach($model->role as $val){
+                            $roles = $authManager->getRole($val);
+                            $authManager->assign($roles,$id);
+                        }
+                    }
+                    $trans->commit();//提交事务
+                    //跳转和提示信息
+                    \Yii::$app->session->setFlash('success','修改管理员信息成功!');
+                    return $this->redirect(['admin/index']);
+                }catch(Exception $e){
+                    //事务回滚
+                    $trans->rollBack();
+                }
             }
         }
-        //密码不能回显
-        $model->password_hash='';
-        return $this->render('update',['model'=>$model]);
+        //++++得到所有的角色+++++
+        $role = [];
+        $allroles = $authManager->getRoles();
+        foreach($allroles as $rol){
+            $role[$rol->name] = $rol->description;
+        }
+        return $this->render('update',['model'=>$model,'role'=>$role]);
     }
     //管理员的删除
     public function actionDelete($id){
@@ -132,6 +152,7 @@ class AdminController extends \yii\web\Controller
     //管理员注销
     public function actionLogout(){
         \Yii::$app->user->logout();
+        return $this->redirect(['admin/login'])->send();
     }
     //修改自己的密码
     public function actionEdit(){
@@ -166,5 +187,15 @@ class AdminController extends \yii\web\Controller
         }
         $model->password_hash = '';
         return $this->render('edit',['model'=>$model]);
+    }
+    //配置用户的权限
+    public function behaviors()
+    {
+        return [
+            'rbac'=>[
+                'class'=>RbacFilter::className(),
+                'except'=>['login','logout','captcha'],
+            ]
+        ];
     }
 }
