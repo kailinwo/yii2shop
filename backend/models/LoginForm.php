@@ -18,8 +18,8 @@ class LoginForm extends Model
     public function rules(){
        return [
             [['username','password_hash','code'],'required'],
-           ['remmber','safe'],
-               ['code','captcha','captchaAction'=>'admin/captcha'],
+            ['remmber','safe'],
+            ['code','captcha','captchaAction'=>'admin/captcha'],
         ];
     }
     public function attributeLabels()

@@ -11,14 +11,16 @@ return [
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
     'controllerNamespace' => 'frontend\controllers',
+    'layout'=>false,
     'components' => [
         'request' => [
             'csrfParam' => '_csrf-frontend',
         ],
         'user' => [
-            'identityClass' => 'common\models\User',
+            'identityClass' => 'frontend\models\member',
             'enableAutoLogin' => true,
             'identityCookie' => ['name' => '_identity-frontend', 'httpOnly' => true],
+            'loginUrl'=>['site/user-login']
         ],
         'session' => [
             // this is the name of the session cookie used for login on the frontend
@@ -36,14 +38,22 @@ return [
         'errorHandler' => [
             'errorAction' => 'site/error',
         ],
-        /*
+        'sms'=>[
+          'class'=>\frontend\components\Sms::className(),
+           'ak'=>'LTAIYNfBc2zwIoeu',
+           'sk'=>'ksb5NlRJRFMkgg2MpucQtAJoRvH3NF',
+           'sign'=>'王某的超市',
+           'template'=>'SMS_120120317',
+        ],
+
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
+            'suffix'=>'.html',
             'rules' => [
             ],
         ],
-        */
+
     ],
     'params' => $params,
 ];

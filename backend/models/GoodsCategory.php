@@ -47,11 +47,13 @@ class GoodsCategory extends \yii\db\ActiveRecord
     }
     public function validatePid(){
         //不能修改为自己的子孙节点的子节点;
-        $parent = GoodsCategory::findOne(['id'=>$this->parent_id]);
-        //处理验证不通过的情况
-        if($parent->isChildOf($this)){
-            //给模型添加错误信息
-            $this->addError('parent_id','不能修改为子孙节点的子节点!');
+        if($this->parent_id){ //如果parent_id存在就执行一下代码:排除根节点(为0时)!
+            $parent = GoodsCategory::findOne(['id'=>$this->parent_id]);
+            //处理验证不通过的情况
+            if($parent->isChildOf($this)){
+                //给模型添加错误信息
+                $this->addError('parent_id','不能修改为子孙节点的子节点!');
+            }
         }
     }
 
@@ -101,5 +103,39 @@ class GoodsCategory extends \yii\db\ActiveRecord
     {
         return new GoodsCategoryQuery(get_called_class());
     }
+    //给前端页面输出html的结构
+    public static function getCategoryies()
+    {
+        $redis = new \Redis();
+        $redis->connect('127.0.0.1');
+        $html = $redis->get('goods_categorys');
+        if($html==false){
+            $ones = \backend\models\GoodsCategory::find()->where(['parent_id'=>0])->all();
+            foreach($ones as $k1=>$one){
+                $html.= '<div class="cat '.($k1?'':'item1').'">';
+                $html.='<h3><a href="'.\yii\helpers\Url::to(['goods/list','id'=>$one->id]).'">'.$one->name.'</a><b></b></h3>';
+                $html.='<div class="cat_detail">';
+                $twos = \backend\models\GoodsCategory::find()->where(['parent_id'=>$one->id])->all();
+                foreach($twos as $k2=>$two){
+                    $html.='<dl '.($k2?'':'class="dl_1st"').'>';
+                    $html.='<dt><a href="'.\yii\helpers\Url::to(['goods/list','id'=>$two->id]).'">'.$two->name.'</a></dt>';
+                    $html.='<dd>';
+                    $threes = \backend\models\GoodsCategory::find()->where(['parent_id'=>$two->id])->all();
+                    foreach($threes as $three){
+                        $html.='<a href="'.\yii\helpers\Url::to(['goods/list','id'=>$three->id]).'">'.$three->name.'</a>';
+                    }
+                    $html.='</dd>';
+                    $html.='</dl>';
+                }
+                $html.='</div>';
+                $html.='</div>';
+            }
+            //redis里面没有就设置一次
+            $redis->set('goods_categorys',$html,24*3600);
+        }
+        return $html;
+    }
+    //goods categorysjie
+
 
 }
