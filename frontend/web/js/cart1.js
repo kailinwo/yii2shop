@@ -74,5 +74,5 @@ $(function(){
 	});
 });
 var changeNum = function(goods_id,amount){
-	$.post("http://www.yiishop.com/site/cart-change.html",{goods_id:goods_id,amount:amount});
+	$.post("cart-change",{goods_id:goods_id,amount:amount});
 };
