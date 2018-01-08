@@ -126,7 +126,7 @@
     </p>
 </div>
 <!-- 底部版权 end -->
-<script type="text/javascript">
+<script>
 
 //    $("#table").on('click',"#delete",function () {
 //      var tr = $(this).closest('tr');
