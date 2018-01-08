@@ -1,4 +1,8 @@
 <!-- 顶部导航 start -->
+<style type="text/css">
+    .background-color: {
+    }
+</style>
 <div class="topnav">
     <div class="topnav_bd w1210 bc">
         <div class="topnav_left">
@@ -34,8 +38,8 @@
         <div class="search fl">
             <div class="search_form">
                 <div class="form_left fl"></div>
-                <form action="" name="serarch" method="get" class="fl">
-                    <input type="text" class="txt" value="请输入商品关键字" /><input type="submit" class="btn" value="搜索" />
+                <form action="<?=\yii\helpers\Url::to(['site/search'])?>"  method="get" class="fl">
+                    <input type="text" name="keywords" class="txt" value="请输入商品关键字" /><input type="submit" class="btn" value="搜索" />
                 </form>
                 <div class="form_right fl"></div>
             </div>
@@ -64,7 +68,7 @@
                     <div class="uclist mt10">
                         <ul class="list1 fl">
                             <li><a href="">用户信息></a></li>
-                            <li><a href="">我的订单></a></li>
+                            <li><a href="<?=\yii\helpers\Url::to(['order/orderlist'])?>">我的订单></a></li>
                             <li><a href="<?=\yii\helpers\Url::to(['site/address-add'])?>">收货地址></a></li>
                             <li><a href="">我的收藏></a></li>
                         </ul>
@@ -98,9 +102,18 @@
                     <a href="<?=\yii\helpers\Url::to(['site/cart'])?>">去购物车结算</a>
                     <b></b>
                 </dt>
-                <dd>
+                <dd class="background-color:#b3eef5;">
                     <div class="prompt">
-                        购物车中还没有商品，赶紧选购吧！
+                        <?php $carts = \frontend\models\Cart::find()->where(['member_id'=>Yii::$app->user->id])->all();
+                        if(isset($carts)){
+                            foreach($carts as $cart){
+                                $goods = \frontend\models\Goods::findOne(['id'=>$cart->goods_id]);
+                                echo '<tr><td><img src="'.$goods['logo'].'" alt="goods_logo" width="100px"></td><td>'.$goods['name'].'</td></tr>';
+                            }
+                        }else{
+                            echo "购物车中还没有商品,快去选购吧!";
+                        }?>
+
                     </div>
                 </dd>
             </dl>

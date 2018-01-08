@@ -87,7 +87,7 @@
 
 
                 <div class="delivery_select">
-                    <table>
+                    <table id="table" >
                         <thead>
                         <tr>
                             <th class="col1">送货方式</th>
@@ -99,9 +99,9 @@
                         <?php foreach(\frontend\models\Order::$deliveries as $key=>$delivery):?>
                         <tr <?=$key?'':'class="cur"'?>>
                             <td>
-                                <input type="radio" name="delivery_id"  value="<?=$key?>" <?=$key==1?'checked':''?>/><?=$delivery[0]?>
+                                <input type="radio" id="delivery" name="delivery_id" value="<?=$key?>" <?=$key==1?'checked':''?>/><?=$delivery[0]?>
                             </td>
-                            <td>￥<?=$delivery[1]?></td>
+                            <td>￥<span id="deliveryprice"><?=$delivery[1]?></span></td>
                             <td><?=$delivery[2]?></td>
                         </tr>
                         <?php endforeach;?>
@@ -167,7 +167,7 @@
                             <ul>
                                 <li>
                                     <span><?=$count?> 件商品，总商品金额：</span>
-                                    <em>￥<?=$total?></em>
+                                    <em>￥<span id="total"><?=$total?></span></em>
                                 </li>
                                 <li>
                                     <span>返现：</span>
@@ -175,12 +175,12 @@
                                 </li>
                                 <li>
                                     <span>运费：</span>
-                                    <em>￥10.00</em>
+                                    <em >￥<span id="yunfei">25.00</span></em>
                                 </li>
-                                <li>
-                                    <span>应付总额：</span>
-                                    <em>￥<?=$total?></em>
-                                </li>
+<!--                                <li>-->
+<!--                                    <span>应付总额：</span>-->
+<!--                                    <em>￥<span class="totaly">--><?//=$total?><!--</span></em>-->
+<!--                                </li>-->
                             </ul>
                         </td>
                     </tr>
@@ -193,7 +193,7 @@
 
         <div class="fillin_ft">
             <button><span>提交订单</span></button>
-            <p>应付总额：<strong>￥<?=$total?>元</strong></p>
+            <p>应付总额：<strong>￥<span class="totaly"><?=$total?></span>元</strong></p>
         </div>
     </form>
 </div>
@@ -226,6 +226,21 @@
     </p>
 </div>
 <!-- 底部版权 end -->
-
+<script>
+    //通过table来进行事件委派
+    $('#table').on('change','#delivery',function () {
+        var tr = $(this).closest('tr');
+        var deliveryprice = tr.find('#deliveryprice').text();
+        //将得到的值赋值给邮费;
+        $('#yunfei').text(deliveryprice);
+        //得到之前的总金额
+        var total = $('#total').text();
+        //得到邮费
+        var you = parseInt(deliveryprice);
+        var tota = parseInt(total);
+        $('.totaly').text(you+tota);
+//        $('.totaly').text(you+tota);
+    });
+</script>
 </body>
 </html>

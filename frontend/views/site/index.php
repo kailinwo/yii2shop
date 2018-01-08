@@ -49,8 +49,8 @@
         <div class="search fl">
             <div class="search_form">
                 <div class="form_left fl"></div>
-                <form action="" name="serarch" method="get" class="fl">
-                    <input type="text" class="txt" value="请输入商品关键字" /><input type="submit" class="btn" value="搜索" />
+                <form action="<?=\yii\helpers\Url::to(['site/search'])?>"  method="get" class="fl">
+                    <input type="text" name="keywords" class="txt" value="请输入商品关键字" /><input type="submit" class="btn" value="搜索" />
                 </form>
                 <div class="form_right fl"></div>
             </div>
@@ -115,7 +115,15 @@
                 </dt>
                 <dd>
                     <div class="prompt">
-                        购物车中还没有商品，赶紧选购吧！
+                        <?php $carts = \frontend\models\Cart::find()->where(['member_id'=>Yii::$app->user->id])->all();
+                        if(isset($carts)){
+                            foreach($carts as $cart){
+                                $goods = \frontend\models\Goods::findOne(['id'=>$cart->goods_id]);
+                                echo '<tr><td><img src="'.$goods['logo'].'" alt="goods_logo" width="100px"></td><td>'.$goods['name'].'</td></tr>';
+                            }
+                        }else{
+                            echo "购物车中还没有商品,快去选购吧!";
+                        }?>
                     </div>
                 </dd>
             </dl>
@@ -467,7 +475,7 @@
                     <ul>
                         <li>
                             <dl>
-                                <dt><a href=""><img src="/images/hpG4.jpg" alt="" /></a></dt>
+                                <dt><a href=""><img src="images/hpG4.jpg" alt="" /></a></dt>
                                 <dd><a href="">惠普G4-1332TX 14英寸笔</a></dd>
                                 <dd><span>售价：</span> <strong>￥2999.00</strong></dd>
                             </dl>
@@ -475,7 +483,7 @@
 
                         <li>
                             <dl>
-                                <dt><a href=""><img src="/images/thinkpad e420.jpg" alt="" /></a></dt>
+                                <dt><a href=""><img src="images/thinkpad e420.jpg" alt="" /></a></dt>
                                 <dd><a href="">ThinkPad E42014英寸笔..</a></dd>
                                 <dd><span>售价：</span> <strong>￥4199.00</strong></dd>
                             </dl>
@@ -483,7 +491,7 @@
 
                         <li>
                             <dl>
-                                <dt><a href=""><img src="/images/acer4739.jpg" alt="" /></a></dt>
+                                <dt><a href=""><img src="images/acer4739.jpg" alt="" /></a></dt>
                                 <dd><a href="">宏碁AS4739-382G32Mnk</a></dd>
                                 <dd><span>售价：</span> <strong>￥2799.00</strong></dd>
                             </dl>
@@ -491,7 +499,7 @@
 
                         <li>
                             <dl>
-                                <dt><a href=""><img src="/images/samsung6800.jpg" alt="" /></a></dt>
+                                <dt><a href=""><img src="images/samsung6800.jpg" alt="" /></a></dt>
                                 <dd><a href="">三星Galaxy Tab P6800.</a></dd>
                                 <dd><span>售价：</span> <strong>￥4699.00</strong></dd>
                             </dl>
@@ -499,7 +507,7 @@
 
                         <li>
                             <dl>
-                                <dt><a href=""><img src="/images/lh531.jpg" alt="" /></a></dt>
+                                <dt><a href=""><img src="images/lh531.jpg" alt="" /></a></dt>
                                 <dd><a href="">富士通LH531 14.1英寸笔记</a></dd>
                                 <dd><span>售价：</span> <strong>￥2189.00</strong></dd>
                             </dl>
@@ -507,11 +515,12 @@
 
                         <li>
                             <dl>
-                                <dt><a href=""><img src="/images/qinghuax2.jpg" alt="" /></a></dt>
+                                <dt><a href=""><img src="images/qinghuax2.jpg" alt="" /></a></dt>
                                 <dd><a href="">清华同方精锐X2笔记本 </a></dd>
                                 <dd><span>售价：</span> <strong>￥2499.00</strong></dd>
                             </dl>
                         </li>
+
                     </ul>
                 </div>
 

@@ -94,7 +94,7 @@ class OrderController extends Controller
                             $goods->save(false);
                             //保存购物车的商品总价
                             $order->total += $orderGoods->total;
-                        } else {
+                        }else{
                             //商品的库存不足以本次的订单数量 >>抛出异常
                             throw new Exception('商品的库存不足');
                         }

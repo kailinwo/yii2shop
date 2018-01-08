@@ -6,6 +6,7 @@ use frontend\models\Cart;
 use frontend\models\Member;
 use Yii;
 use yii\base\InvalidParamException;
+use yii\data\Pagination;
 use yii\helpers\ArrayHelper;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -434,7 +435,7 @@ class SiteController extends Controller
                $num = $count['amount']+$amount;
                 Cart::updateAll(['amount'=>$num],['goods_id'=>$goods_id]);
             }else{
-                //如果没有找到>>新建一个模型对象,然后save!
+                //如果没有找到本次添加的商品信息>>新建一个模型对象,然后save!
                 $model = new Cart();
                 $model->goods_id = $goods_id;
                 $model->amount = $amount;
@@ -452,8 +453,6 @@ class SiteController extends Controller
         if(Yii::$app->user->isGuest){
             //从cookie里面获取数据
             $cookies = Yii::$app->request->cookies;
-            $values = $cookies->getValue('cart');
-            $cart = unserialize($values);
             //得到$cart里面的goods_id然后根据goods表的id去查询goods数据表里的商品信息;
             if($cookies->has('cart')){
                 $values = $cookies->getValue('cart');
@@ -545,5 +544,15 @@ class SiteController extends Controller
         $cookies->remove('cart');
 //        var_dump(unserialize(Yii::$app->request->cookies->getValue('cart')));die('登录后...');
     }
-
+    //全局搜索
+    public function actionSearch($keywords){
+        //查询的是商品表,显示商品,使用模糊搜索
+        $query = \frontend\models\Goods::find()->andWhere(['like','name',$keywords])->count();
+        $pager = new Pagination([
+            'totalCount'=>$query,
+            'defaultPageSize'=>10,
+        ]);
+        $model = \frontend\models\Goods::find()->limit($pager->limit)->offset($pager->offset)->andWhere(['like','name',$keywords])->all();
+        return $this->render('search',['model'=>$model,'pager'=>$pager]);
+    }
 }
