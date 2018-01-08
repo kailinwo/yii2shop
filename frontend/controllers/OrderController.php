@@ -40,15 +40,33 @@ class OrderController extends Controller
             $ids = ArrayHelper::map($users,'goods_id','goods_id');
             $amount = ArrayHelper::map($users,'goods_id','amount');
             $goods = Goods::find()->where(['in','id',$ids])->all();
-            $model = new Order();
+            $order = new Order();
             if(\Yii::$app->request->isPost){
-                $model->load(\Yii::$app->request->post(),'');
+                $order->load(\Yii::$app->request->post(),'');
 //                var_dump($model->delivery_id);die('查看订单表的数据提交');
+                //根据用户的地址来找到地址信息
+                $address = Address::findOne(['id'=>$order->address_id]);
+                $order->member_id = \Yii::$app->user->id;
+                $order->name = $address['name'];
+                $order->province = $address['cmbProvince'];
+                $order->city = $address['cmbCity'];
+                $order->area = $address['cmbArea'];
+                $order->address = $address['address'];
+                $order->tel = $address['tel'];
+                //配送方式的数据绑定>>由于是自定义在模型的数组,要使用这个id得到数组里面的数据
+                $order->delivery_name = Order::$deliveries[$order->delivery_id][0];
+                $order->delivery_price = Order::$deliveries[$order->delivery_id][1];
+                //支付方式的数据绑定>>同上
+                $order->payment_name = Order::$payments[$order->payment_id][0];
+                $order->status = 1;
+                $order->total = 0;
+                $order->create_time = time();
                 //>>开启事务
                 $trans = \Yii::$app->db->beginTransaction();
                 try {
-                    //根据用户的地址来找到地址信息
-                    $address = Address::findOne(['id'=>$model->address_id]);
+                    if($order->validate()){
+                        $order->save();
+                    }
                     //>>先通过用户的id来找到该用户购物车里面的所有的商品:
                     $carts = Cart::find()->where(['member_id' => \Yii::$app->user->id])->all();
                     //遍历得到每个商品的数量
@@ -57,51 +75,37 @@ class OrderController extends Controller
                         $goods = Goods::find()->where(['id' => $cart->goods_id])->one();
                         //判断是否商品数据表中的每条库存是否足够用来下单
                         if ($goods->stock >= $cart->amount) {
-                            //库存足够的话>>执行以下代码
-                            $model->member_id = \Yii::$app->user->id;
-                            $model->name = $address['name'];
-                            $model->province = $address['cmbProvince'];
-                            $model->city = $address['cmbCity'];
-                            $model->area = $address['cmbArea'];
-                            $model->address = $address['address'];
-                            $model->tel = $address['tel'];
-                            //配送方式的数据绑定>>由于是自定义在模型的数组,要使用这个id得到数组里面的数据
-                            $model->delivery_name = Order::$deliveries[$model->delivery_id][0];
-                            $model->delivery_price = Order::$deliveries[$model->delivery_id][1];
-                            //支付方式的数据绑定>>同上
-                            $model->payment_name = Order::$payments[$model->payment_id][0];
-                            $model->status = 1;
-                            $total=0;
-                            $total += $goods->shop_price*$cart->amount;
-                            $model->total = $total;
-                            $model->create_time = time();
-                            if($model->validate()){
-                                $model->save();
-                                $orderid = \Yii::$app->db->getLastInsertID();
-                                //商品的库存足够的情况>>>往Oder_goods关系表里面写入数据
-                                $orderGoods = new OrderGoods();
-                                $orderGoods->order_id =$orderid;
-                                $orderGoods->goods_id = $goods->id;
-                                $orderGoods->goods_name = $goods->name;
-                                $orderGoods->logo = $goods->logo;
-                                $orderGoods->price = $goods->shop_price;
-                                $orderGoods->amount = $cart->amount;
-                                $orderGoods->total = $goods->shop_price * $cart->amount;
-                                $orderGoods->member_id = \Yii::$app->user->id;
+                            //商品的库存足够的情况>>>往Oder_goods关系表里面写入数据
+                            $orderGoods = new OrderGoods();
+                            $orderGoods->order_id =$order->id;
+                            $orderGoods->goods_id = $goods->id;
+                            $orderGoods->goods_name = $goods->name;
+                            $orderGoods->logo = $goods->logo;
+                            $orderGoods->price = $goods->shop_price;
+                            $orderGoods->amount = $cart->amount;
+                            $orderGoods->total = $goods->shop_price * $cart->amount;
+                            $orderGoods->member_id = \Yii::$app->user->id;
+                            //order_goods关系表的保存
+                            if($orderGoods->validate()){
                                 $orderGoods->save();
-                                //扣减库存>>处理之后将数据写回去
-                                $goods->stock -= $cart->amount;
-                                $goods->save(false);
-                                //下单成功之后要将当前用户的购物车中的商品删除
-                                Cart::deleteAll(['id'=>$cart->id]);
-                                //提交事务>>>
-                                $trans->commit();
                             }
+                            //扣减库存>>处理之后将数据写回去
+                            $goods->stock -= $cart->amount;
+                            $goods->save(false);
+                            //保存购物车的商品总价
+                            $order->total += $orderGoods->total;
                         } else {
                             //商品的库存不足以本次的订单数量 >>抛出异常
                             throw new Exception('商品的库存不足');
                         }
                     }
+                    //处理运费
+                    $order->total += $order->delivery_price;
+                    $order->save();
+                    //下单成功之后要将当前用户的购物车中的商品删除
+                    Cart::deleteAll(['member_id'=>\Yii::$app->user->id]);
+                    //提交事务>>>
+                    $trans->commit();
                     //order表和order_goods中间表两个数据都写入成功了,即提示信息跳转!
                    return $this->redirect(['order/success']);
                 }catch(Exception $e){
@@ -123,11 +127,13 @@ class OrderController extends Controller
         if(\Yii::$app->user->isGuest){
             return $this->redirect(['site/login']);
         }else{
+            //根据用户的id去order_goods表中查找用户的商品信息!
             $models = OrderGoods::find()->where(['member_id' => \Yii::$app->user->id])->all();
             $a = 0;
             $b = 0;
             $c = 0;
             $d = 0;
+            //得到order_goods表中所有的用户的商品信息,遍历得到order_id,再根据order_id查找order表里面的status!
             foreach ($models as $model){
                 $time = Order::findOne(['id'=>$model->order_id]);
                 if ($time['status']===1){$a++;};if($time['status']===4){$b++;}if ($time['status']===3){$c++;}if ($time['status']===2){$d++;}

@@ -32,7 +32,7 @@ class Order extends ActiveRecord
     public function rules()
     {
         return [
-            [['address_id','member_id','name','province','city','area','address','tel','delivery_id','delivery_name','delivery_price','payment_id','payment_name','total'],'required'],
+            [['address_id','member_id','name','province','city','area','address','tel','delivery_id','delivery_name','delivery_price','payment_id','payment_name','total','create_time'],'required'],
         ];
     }
 }
